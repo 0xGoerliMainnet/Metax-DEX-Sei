@@ -1,6 +1,6 @@
 # Web3-Dex-Sei
 
-#### Compile
+## Compile
 
 Confirm that the prerequisites listed in the CosmWasm docs are met, and then run the following
 
@@ -15,7 +15,7 @@ docker run --rm -v "$(pwd)":/code \
   cosmwasm/rust-optimizer:0.12.11
 ```
 
-#### Deploy
+## Deploy
 
 Store a compiled wasm binary to the sei network:
 
