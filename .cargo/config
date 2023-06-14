@@ -2,3 +2,9 @@
 wasm = "build --release --lib --target wasm32-unknown-unknown"
 unit-test = "test --lib"
 schema = "run --bin schema"
+
+[source.crates-io]
+replace-with = 'ustc'
+
+[source.ustc]
+registry = "git://mirrors.ustc.edu.cn/crates.io-index"

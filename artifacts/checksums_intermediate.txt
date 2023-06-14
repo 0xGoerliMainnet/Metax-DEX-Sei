@@ -1,0 +1,1 @@
+2ecde965d2ba91caf2740374363e288cd2002221c89ad84eb0ae38b5f2198cfc  ./target/wasm32-unknown-unknown/release/wasm_dexrouter.wasm
