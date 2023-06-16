@@ -11,9 +11,13 @@ use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, GetCountResponse, InstantiateMsg, QueryMsg};
 use crate::state::{State, STATE};
 
-use astroport::pair::{ExecuteMsg as SparrowSwapExecuteMsg};
-use astroport::asset::{Asset};
+// sparrowswap
+use sparrowswap_lib::pair::{ExecuteMsg as SparrowSwapExecuteMsg};
+use sparrowswap_lib::asset::{Asset as SparrowSwapAsset};
 
+// astroport
+use astroport_lib::pair::{ExecuteMsg as AstroportMsg};
+use astroport_lib::asset::{Asset as AstroportAsset, AssetInfo as AstroportAssetInfo};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:wasm-dexrouter";
@@ -55,8 +59,18 @@ pub fn execute(
             belief_price,
             max_spread,
             to
-        } => execute::sparrowSwap(pool_address, offer_asset, belief_price, max_spread, to)
+        } => execute::sparrowSwap(info, pool_address, offer_asset, belief_price, max_spread, to),
+        ExecuteMsg::AstroportSwap {
+            pool_address,
+            offer_asset,
+            ask_asset_info,
+            belief_price,
+            max_spread,
+            to
+        } => execute::astroportSwap(info, pool_address, offer_asset, ask_asset_info, belief_price, max_spread, to),
+        
     }
+    
 }
 
 pub mod execute {
@@ -83,17 +97,40 @@ pub mod execute {
     }
 
     pub fn sparrowSwap(
+        info: MessageInfo,
         pool_address: String,
-        offer_asset: Asset,
+        offer_asset: SparrowSwapAsset,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>
     ) -> Result<Response, ContractError> {
         Ok(Response::new().add_message(WasmMsg::Execute {
             contract_addr: pool_address,
-            funds: vec![],
+            funds: info.funds,
             msg: to_binary(&SparrowSwapExecuteMsg::Swap {
                 offer_asset: offer_asset,
+                belief_price: belief_price,
+                max_spread: max_spread,
+                to: to
+            })?,
+        }))
+    }
+
+    pub fn astroportSwap(
+        info: MessageInfo,
+        pool_address: String,
+        offer_asset: AstroportAsset,
+        ask_asset_info: Option<AstroportAssetInfo>,
+        belief_price: Option<Decimal>,
+        max_spread: Option<Decimal>,
+        to: Option<String>
+    ) -> Result<Response, ContractError> {
+        Ok(Response::new().add_message(WasmMsg::Execute {
+            contract_addr: pool_address,
+            funds: info.funds,
+            msg: to_binary(&AstroportMsg::Swap {
+                offer_asset: offer_asset,
+                ask_asset_info: ask_asset_info,
                 belief_price: belief_price,
                 max_spread: max_spread,
                 to: to

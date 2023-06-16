@@ -48,8 +48,9 @@ cw2 = "1.0.1"
 schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
-astroport = { path = "packages/SparrowSwap/astroport", default-features = false }
-
+sparrowswap_lib = { path = "packages/sparrowswap_lib", default-features = false }
+astroport_lib = { path = "packages/astroport_lib", default-features = false }
+cw20 = { version = "0.15" }
 
 [dev-dependencies]
 cw-multi-test = "0.16.2"
