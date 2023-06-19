@@ -32,14 +32,14 @@ export CONTRACT_WASM_BINARY=./artifacts/wasm_dexrouter-aarch64.wasm
 export ENDPOINT=https://sei-testnet-rpc.polkachu.com
 export CHAINID=atlantic-2
 
-seid tx wasm store $CONTRACT_WASM_BINARY -y --from=$ACCOUNT_NAME --node $ENDPOINT --chain-id=$CHAINID --gas=1203276 --fees=120337usei --broadcast-mode=block
+seid tx wasm store $CONTRACT_WASM_BINARY -y --from=$ACCOUNT_NAME --node $ENDPOINT --chain-id=$CHAINID --gas=1568479 --fees=150337usei --broadcast-mode=block
 
 ···
 
 Once your proposal is stored to the testnet, you can instantiate your contract:
 
 ```
-export CONTRACT_ID=1182
+export CONTRACT_ID=1260
 export LABEL="wasm-dexrouter"
 seid tx wasm instantiate $CONTRACT_ID '{"count": 0}' --chain-id $CHAINID --from $ACCOUNT_NAME --gas=4000000 --fees=50000usei --broadcast-mode=block --label $LABEL --admin $ACCOUNT_ADDRESS --node $ENDPOINT
 ```
@@ -66,7 +66,7 @@ txhash: 66B2D61EC12C20CFECF6111AFAA95A3C6893F5A4DB99A9896958A2BFB1341165
 **sparrow swap exec**
 
 ```
-export CONTRACT=sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m
+export CONTRACT=sei120n77c9gwhz5hhmuw8n8sprmq485y9d3gggj3skdly38sl77jglsgsdm3j
 export ARGS='{"swap":{"offer_asset":{"info":{"native_token":{"denom":"usei"}},"amount":"5000"},"belief_price":"773292751","max_spread":"0.05"}}'
 export ACCOUNT_NAME=shaneson
 
@@ -78,7 +78,7 @@ seid tx wasm execute $CONTRACT $ARGS --from $ACCOUNT_NAME --broadcast-mode=block
  **wasm-dexrouter swap exec -- sparrowswap**
 
 ```
-export CONTRACT=sei1dyqkrx2kvg7pgj5674gq3flj55hql3fy8elvlyssuwrgw5sp5f3qsa3xh2
+export CONTRACT=sei19x8whl2khg0qqvq67yr00h6t36tau94s77e25ea8vaa0wpw6jqfs5d9vmy
 export ARGS='{"sparrow_swap":{"pool_address":"sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m", "offer_asset":{"info":{"native_token":{"denom":"usei"}},"amount":"5000"},"belief_price":"773292751","max_spread":"0.05", "to": "sei1q79kkzwzmwenzzdae474etgqs5cjqxlsh4cpak" }}'
 export ACCOUNT_NAME=shaneson
 
@@ -98,4 +98,14 @@ seid tx wasm execute $CONTRACT $ARGS --from $ACCOUNT_NAME --broadcast-mode=block
 
  ```
 
+ **wasm-dexrouter unxswap one step**
+ 
+
+```
+export CONTRACT=sei1xadfrzm6qjmh2kzxw39de80j5qnx5hv24sw5wnda0dnaqena8l5qv0kvjj
+export ARGS='{"unxswap": {"steps": [{"sparrow_swap":{"pool_address":"sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m", "offer_asset":{"info":{"native_token":{"denom":"usei"}},"amount":"5000"},"belief_price":"773292751","max_spread":"0.05", "base_swap_info": {"native_swap": {"offer_denom": "usei", "ask_denom": "factory/sei135mlnw9ndkyglgx7ma95pw22cl64mpnw58pfpd/usdc"}} }}], "minimum_receive": "0" }}'
+
+seid tx wasm execute $CONTRACT $ARGS --from $ACCOUNT_NAME --broadcast-mode=block --chain-id atlantic-2 --gas=451964 --fees=45198usei --node $ENDPOINT --amount 5000usei -y
+
+```
  
