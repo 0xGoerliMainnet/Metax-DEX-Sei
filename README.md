@@ -29,10 +29,12 @@ Store a compiled wasm binary to the sei network:
 export ACCOUNT_ADDRESS=sei1q79kkzwzmwenzzdae474etgqs5cjqxlsh4cpak
 export ACCOUNT_NAME=shaneson
 export CONTRACT_WASM_BINARY=./artifacts/wasm_dexrouter-aarch64.wasm
-export ENDPOINT=https://sei-testnet-rpc.polkachu.com
+export ENDPOINT=https://sei-testnet-rpc.polkachu.com/
 export CHAINID=atlantic-2
 
 seid tx wasm store $CONTRACT_WASM_BINARY -y --from=$ACCOUNT_NAME --node $ENDPOINT --chain-id=$CHAINID --gas=1568479 --fees=150337usei --broadcast-mode=block
+
+seid tx wasm store ./artifacts/wasm_dexrouter-aarch64.wasm -y --from=shaneson --node https://sei-testnet-rpc.polkachu.com --chain-id=atlantic-2 --gas=1568479 --fees=150337usei --broadcast-mode=block
 
 ···
 

@@ -48,6 +48,7 @@ pub enum SwapOperation {
     SparrowSwap  {
         pool_address: String,
         offer_asset: SparrowSwapAsset,
+        ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         base_swap_info: BaseSwapMsg
@@ -83,6 +84,7 @@ pub enum ExecuteMsg {
     SparrowSwap  {
         pool_address: String,
         offer_asset: SparrowSwapAsset,
+        ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>,

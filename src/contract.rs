@@ -1,8 +1,9 @@
 #[cfg(not(feature = "library"))]
+use std::str;
 
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Addr, Api, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, QueryRequest, Response, StdError, StdResult, Uint128, WasmMsg, WasmQuery, Coin
+    entry_point, to_binary, Addr, CosmosMsg, Decimal, Deps, DepsMut, Env,
+    MessageInfo, Response, StdError, StdResult, Uint128, WasmMsg, WasmQuery, Coin
 };
 
 use cw2::set_contract_version;
@@ -18,6 +19,7 @@ use sparrowswap_lib::asset::{Asset as SparrowSwapAsset};
 // astroport
 use astroport_lib::pair::{ExecuteMsg as AstroportMsg};
 use astroport_lib::asset::{Asset as AstroportAsset, AssetInfo};
+use astroport_lib::querier::{query_balance, query_pair_info, query_token_balance};
 
 use serde_json::{Result as JSONResult, Value};
 
@@ -59,10 +61,11 @@ pub fn execute(
         ExecuteMsg::SparrowSwap {
             pool_address,
             offer_asset,
+            ask_asset_info,
             belief_price,
             max_spread,
             to
-        } => execute::sparrowSwap(info, pool_address, offer_asset, belief_price, max_spread, to),
+        } => execute::sparrowSwap( deps, env, info, pool_address, offer_asset, ask_asset_info, belief_price, max_spread, to),
         ExecuteMsg::AstroportSwap {
             pool_address,
             offer_asset,
@@ -70,7 +73,7 @@ pub fn execute(
             belief_price,
             max_spread,
             to
-        } => execute::astroportSwap(info, pool_address, offer_asset, ask_asset_info, belief_price, max_spread, to),
+        } => execute::astroportSwap(deps, env, info, pool_address, offer_asset, ask_asset_info, belief_price, max_spread, to),
         ExecuteMsg::Unxswap{
             steps,
             minimum_receive,
@@ -117,16 +120,39 @@ pub mod execute {
     }
 
     pub fn sparrowSwap(
+        deps: DepsMut,
+        env: Env,
         info: MessageInfo,
         pool_address: String,
         offer_asset: SparrowSwapAsset,
+        ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
-        to: Option<String>
+        to: Option<String>,
     ) -> Result<Response, ContractError> {
+
+        let mut temp_ask_asset_info = ask_asset_info.clone().unwrap();
+        let mut temp_ask_asset_info2 = ask_asset_info.clone().unwrap();
+
+        // smart query
+        let ask_balance = match temp_ask_asset_info {
+            AssetInfo::NativeToken { denom } => {
+                query_balance(&deps.querier, env.contract.address, denom)?
+            }
+            AssetInfo::Token { contract_addr } => {
+                query_token_balance(&deps.querier, contract_addr, env.contract.address)?
+            }
+        };
+        let ask_denom = str::from_utf8(temp_ask_asset_info2.as_bytes());
+        let new_funds = vec![Coin{
+            denom: (*(ask_denom.unwrap())).to_string(),
+            amount: ask_balance
+        }];
+
+
         Ok(Response::new().add_message(WasmMsg::Execute {
             contract_addr: pool_address,
-            funds: info.funds,
+            funds: new_funds,
             msg: to_binary(&SparrowSwapeMsg::Swap {
                 offer_asset: offer_asset,
                 belief_price: belief_price,
@@ -136,9 +162,10 @@ pub mod execute {
         }))
     }
 
-
     
     pub fn astroportSwap(
+        deps: DepsMut,
+        env: Env,
         info: MessageInfo,
         pool_address: String,
         offer_asset: AstroportAsset,
@@ -147,9 +174,28 @@ pub mod execute {
         max_spread: Option<Decimal>,
         to: Option<String>
     ) -> Result<Response, ContractError> {
+
+        let mut temp_ask_asset_info = ask_asset_info.clone().unwrap();
+        let mut temp_ask_asset_info2 = ask_asset_info.clone().unwrap();
+
+        // smart query
+        let ask_balance = match temp_ask_asset_info {
+            AssetInfo::NativeToken { denom } => {
+                query_balance(&deps.querier, env.contract.address, denom)?
+            }
+            AssetInfo::Token { contract_addr } => {
+                query_token_balance(&deps.querier, contract_addr, env.contract.address)?
+            }
+        };
+        let ask_denom = str::from_utf8(temp_ask_asset_info2.as_bytes());
+        let new_funds = vec![Coin{
+            denom: (*(ask_denom.unwrap())).to_string(),
+            amount: ask_balance
+        }];
+
         Ok(Response::new().add_message(WasmMsg::Execute {
             contract_addr: pool_address,
-            funds: info.funds,
+            funds: new_funds,
             msg: to_binary(&AstroportMsg::Swap {
                 offer_asset: offer_asset,
                 ask_asset_info: ask_asset_info,
@@ -207,6 +253,7 @@ pub mod execute {
                     SwapOperation::SparrowSwap  {
                         pool_address,
                         offer_asset,
+                        ask_asset_info,
                         belief_price,
                         max_spread,
                         base_swap_info,
@@ -214,13 +261,19 @@ pub mod execute {
                         Ok(
                             CosmosMsg::Wasm(
                                 WasmMsg::Execute {
-                                    contract_addr: pool_address,
-                                    funds: vec![Coin{
-                                        denom: raw_info.funds[0].denom.clone(),
-                                        amount: raw_info.funds[0].amount
-                                    }],
-                                    msg: to_binary(&SparrowSwapeMsg::Swap {
+                                    contract_addr: env.contract.address.to_string(),
+                                    funds: if operation_index == 0 {
+                                            vec![Coin{
+                                                denom: raw_info.funds[0].denom.clone(),
+                                                amount: raw_info.funds[0].amount
+                                            }] 
+                                        } else {
+                                            vec![]
+                                        },                                   
+                                    msg: to_binary(&ExecuteMsg::SparrowSwap {
+                                        pool_address: pool_address,
                                         offer_asset: offer_asset,
+                                        ask_asset_info: ask_asset_info,
                                         belief_price: belief_price,
                                         max_spread: max_spread,
                                         to: if operation_index == operations_len {
@@ -242,12 +295,17 @@ pub mod execute {
                         base_swap_info
                     } => {
                         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-                            contract_addr: pool_address,
-                            funds: vec![Coin{
-                                denom: raw_info.funds[0].denom.clone(),
-                                amount: raw_info.funds[0].amount
-                            }],
-                            msg: to_binary(&AstroportMsg::Swap {
+                            contract_addr: env.contract.address.to_string(),
+                            funds: if operation_index == 0 {
+                                    vec![Coin{
+                                        denom: raw_info.funds[0].denom.clone(),
+                                        amount: raw_info.funds[0].amount
+                                    }] 
+                                } else {
+                                    vec![]
+                                },
+                            msg: to_binary(&ExecuteMsg::AstroportSwap {
+                                pool_address: pool_address,
                                 offer_asset: offer_asset,
                                 ask_asset_info: ask_asset_info,
                                 belief_price: belief_price,
@@ -281,94 +339,5 @@ pub mod execute {
 
         Ok(Response::new().add_messages(messages))
 
-    }
-}
-
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::GetCount {} => to_binary(&query::count(deps)?),
-    }
-}
-
-pub mod query {
-    use super::*;
-
-    pub fn count(deps: Deps) -> StdResult<GetCountResponse> {
-        let state = STATE.load(deps.storage)?;
-        Ok(GetCountResponse { count: state.count })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary};
-
-    #[test]
-    fn proper_initialization() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(1000, "earth"));
-
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's query the state
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(17, value.count);
-    }
-
-    
-
-    #[test]
-    fn increment() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // beneficiary can release it
-        let info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Increment {};
-        let _res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // should increase counter by 1
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(18, value.count);
-    }
-
-    #[test]
-    fn reset() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // beneficiary can release it
-        let unauth_info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
-        match res {
-            Err(ContractError::Unauthorized {}) => {}
-            _ => panic!("Must return unauthorized error"),
-        }
-
-        // only the original creator can reset the counter
-        let auth_info = mock_info("creator", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
-
-        // should now be 5
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(5, value.count);
     }
 }
