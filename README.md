@@ -34,8 +34,7 @@ export CHAINID=atlantic-2
 
 seid tx wasm store $CONTRACT_WASM_BINARY -y --from=$ACCOUNT_NAME --node $ENDPOINT --chain-id=$CHAINID --gas=1568479 --fees=150337usei --broadcast-mode=block
 
-
-···
+```
 
 Once your proposal is stored to the testnet, you can instantiate your contract:
 
