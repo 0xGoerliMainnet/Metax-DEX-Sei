@@ -2,7 +2,7 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128, Addr};
 
 // Sparrow Swap
-use sparrowswap_lib::asset::{Asset as SparrowSwapAsset, };
+use sparrowswap_lib::asset::{Asset as SparrowSwapAsset, AssetInfo as SparrowSwapAssetInfo};
 
 // Astroport Swap
 use astroport_lib::asset::{Asset as AstroportAsset, AssetInfo};
@@ -17,13 +17,13 @@ pub struct InstantiateMsg {
 pub enum SwapOperation {
     SparrowSwap  {
         pool_address: String,
-        offer_asset: SparrowSwapAsset,
+        offer_asset_info: SparrowSwapAssetInfo,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>
     },
     AstroportSwap {
         pool_address: String,
-        offer_asset: AstroportAsset,
+        offer_asset_info: AssetInfo,
         ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
@@ -38,14 +38,14 @@ pub enum ExecuteMsg {
 
     SparrowSwap  {
         pool_address: String,
-        offer_asset: SparrowSwapAsset,
+        offer_asset_info: SparrowSwapAssetInfo,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>,
     },
     AstroportSwap {
         pool_address: String,
-        offer_asset: AstroportAsset,
+        offer_asset_info: AssetInfo,
         ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,

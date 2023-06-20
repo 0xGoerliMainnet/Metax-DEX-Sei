@@ -60,19 +60,19 @@ pub fn execute(
         ExecuteMsg::Reset { count } => execute::reset(deps, info, count),
         ExecuteMsg::SparrowSwap {
             pool_address,
-            offer_asset,
+            offer_asset_info,
             belief_price,
             max_spread,
             to
-        } => execute::sparrowSwap( deps, env, info, pool_address, offer_asset, belief_price, max_spread, to),
+        } => execute::sparrowSwap( deps, env, info, pool_address, offer_asset_info, belief_price, max_spread, to),
         ExecuteMsg::AstroportSwap {
             pool_address,
-            offer_asset,
+            offer_asset_info,
             ask_asset_info,
             belief_price,
             max_spread,
             to
-        } => execute::astroportSwap(deps, env, info, pool_address, offer_asset, ask_asset_info, belief_price, max_spread, to),
+        } => execute::astroportSwap(deps, env, info, pool_address, offer_asset_info, ask_asset_info, belief_price, max_spread, to),
         ExecuteMsg::Unxswap{
             steps,
             minimum_receive,
@@ -124,14 +124,14 @@ pub mod execute {
         env: Env,
         info: MessageInfo,
         pool_address: String,
-        offer_asset: SparrowSwapAsset,
+        offer_asset_info: SparrowSwapAssetInfo,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>,
     ) -> Result<Response, ContractError> {
 
-        let mut temp_offer_asset_info = offer_asset.info.clone();
-        let mut temp_offer_asset_info2 = offer_asset.info.clone();
+        let mut temp_offer_asset_info = offer_asset_info.clone();
+        let mut temp_offer_asset_info2 = offer_asset_info.clone();
 
         // smart query
         let offer_balance = match temp_offer_asset_info {
@@ -149,7 +149,7 @@ pub mod execute {
         }];
 
         let new_offer_asset = SparrowSwapAsset {
-            info: offer_asset.info,
+            info: offer_asset_info,
             amount: offer_balance,
         };
 
@@ -171,15 +171,15 @@ pub mod execute {
         env: Env,
         info: MessageInfo,
         pool_address: String,
-        offer_asset: AstroportAsset,
+        offer_asset_info: AssetInfo,
         ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>
     ) -> Result<Response, ContractError> {
 
-        let mut temp_offer_asset_info = offer_asset.info.clone();
-        let mut temp_offer_asset_info2 = offer_asset.info.clone();
+        let mut temp_offer_asset_info = offer_asset_info.clone();
+        let mut temp_offer_asset_info2 = offer_asset_info.clone();
 
         // smart query
         let offer_balance = match temp_offer_asset_info {
@@ -196,11 +196,16 @@ pub mod execute {
             amount: offer_balance
         }];
 
+        let new_offer_asset = AstroportAsset {
+            info: offer_asset_info,
+            amount: offer_balance,
+        };
+
         Ok(Response::new().add_message(WasmMsg::Execute {
             contract_addr: pool_address,
             funds: new_funds,
             msg: to_binary(&AstroportMsg::Swap {
-                offer_asset: offer_asset,
+                offer_asset: new_offer_asset,
                 ask_asset_info: ask_asset_info,
                 belief_price: belief_price,
                 max_spread: max_spread,
@@ -255,7 +260,7 @@ pub mod execute {
                 match op {
                     SwapOperation::SparrowSwap  {
                         pool_address,
-                        offer_asset,
+                        offer_asset_info,
                         belief_price,
                         max_spread
                     } => {
@@ -273,7 +278,7 @@ pub mod execute {
                                         },                                   
                                     msg: to_binary(&ExecuteMsg::SparrowSwap {
                                         pool_address: pool_address,
-                                        offer_asset: offer_asset,
+                                        offer_asset_info: offer_asset_info,
                                         belief_price: belief_price,
                                         max_spread: max_spread,
                                         to: if operation_index == operations_len {
@@ -288,7 +293,7 @@ pub mod execute {
                     },
                     SwapOperation::AstroportSwap  {
                         pool_address,
-                        offer_asset,
+                        offer_asset_info,
                         ask_asset_info,
                         belief_price,
                         max_spread
@@ -305,7 +310,7 @@ pub mod execute {
                                 },
                             msg: to_binary(&ExecuteMsg::AstroportSwap {
                                 pool_address: pool_address,
-                                offer_asset: offer_asset,
+                                offer_asset_info: offer_asset_info,
                                 ask_asset_info: ask_asset_info,
                                 belief_price: belief_price,
                                 max_spread: max_spread,

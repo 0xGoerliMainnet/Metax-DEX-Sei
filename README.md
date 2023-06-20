@@ -40,7 +40,7 @@ seid tx wasm store $CONTRACT_WASM_BINARY -y --from=$ACCOUNT_NAME --node $ENDPOIN
 Once your proposal is stored to the testnet, you can instantiate your contract:
 
 ```
-export CONTRACT_ID=1284
+export CONTRACT_ID=1285
 export LABEL="wasm-dexrouter"
 seid tx wasm instantiate $CONTRACT_ID '{"count": 0}' --chain-id $CHAINID --from $ACCOUNT_NAME --gas=4000000 --fees=50000usei --broadcast-mode=block --label $LABEL --admin $ACCOUNT_ADDRESS --node $ENDPOINT
 ```
@@ -113,8 +113,8 @@ seid tx wasm execute $CONTRACT $ARGS --from $ACCOUNT_NAME --broadcast-mode=block
  **wasm-dexrouter unxswap two step**
 
 ```
-export CONTRACT=sei1pj92dq32vgwehn6c5vjyx35ehtruk7urx8637q8za4gj2kwn73wqv6trun
-export ARGS='{"unxswap": {"steps": [{"sparrow_swap":{"pool_address":"sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m", "offer_asset":{"info":{"native_token":{"denom":"usei"}},"amount":"5000"} }},{"sparrow_swap":{"pool_address":"sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m", "offer_asset":{"info":{"native_token":{"denom":"factory/sei135mlnw9ndkyglgx7ma95pw22cl64mpnw58pfpd/usdc"}},"amount":"5000"} }}], "minimum_receive": "0", "target_asset_info": {"native_token":{"denom":"usei"}} } }'
+export CONTRACT=sei13aherqkk66eu6mgeykx9j48vu5erclcgk2lt0c5ngnk23rcjr2tsq5wx04
+export ARGS='{"unxswap": {"steps": [{"sparrow_swap":{"pool_address":"sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m", "offer_asset_info": {"native_token":  {"denom":"usei"}}}},{"sparrow_swap":{"pool_address":"sei1dgs47p8fe384pepp4q09fqwxu0xpr99j69d7avhqkfs5vsyzvl2sajz57m", "offer_asset_info": {"native_token":{"denom":"factory/sei135mlnw9ndkyglgx7ma95pw22cl64mpnw58pfpd/usdc"}} }}], "minimum_receive": "0", "target_asset_info": {"native_token":{"denom":"usei"}} } }'
 
 seid tx wasm execute $CONTRACT $ARGS --from $ACCOUNT_NAME --broadcast-mode=block --chain-id atlantic-2 --gas=1493206 --fees=149198usei --node $ENDPOINT --amount 5000usei -y
 
