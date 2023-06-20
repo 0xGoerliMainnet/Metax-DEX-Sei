@@ -44,23 +44,6 @@ export LABEL="wasm-dexrouter"
 seid tx wasm instantiate $CONTRACT_ID '{"count": 0}' --chain-id $CHAINID --from $ACCOUNT_NAME --gas=4000000 --fees=50000usei --broadcast-mode=block --label $LABEL --admin $ACCOUNT_ADDRESS --node $ENDPOINT
 ```
 
-Note that the '{}' part is the parameters you pass to instantiate the contract. In this example, the contract takes no parameter so '{}' suffices. For any real world contracts, their instantiation parameters would likely be non-empty. 
-You should get a response like the following:
-
-```
-(base) ➜  wasm-dexrouter git:(main) ✗ seid tx wasm instantiate $CONTRACT_ID '{"count": 0}' --chain-id $CHAINID --from $ACCOUNT_NAME --gas=4000000 --fees=50000usei --broadcast-mode=block --label $LABEL --admin $ACCOUNT_ADDRESS --node $ENDPOINT
-
-{"body":{"messages":[{"@type":"/cosmwasm.wasm.v1.MsgInstantiateContract","sender":"sei1q79kkzwzmwenzzdae474etgqs5cjqxlsh4cpak","admin":"sei1q79kkzwzmwenzzdae474etgqs5cjqxlsh4cpak","code_id":"1141","label":"wasm-dexrouter","msg":{"count":0},"funds":[]}],"memo":"","timeout_height":"0","extension_options":[],"non_critical_extension_options":[]},"auth_info":{"signer_infos":[],"fee":{"amount":[{"denom":"usei","amount":"50000"}],"gas_limit":"4000000","payer":"","granter":""}},"signatures":[]}
-
-confirm transaction before signing and broadcasting [y/N]: y
-code: 0
-
-raw_log: '[{"events":[{"type":"instantiate","attributes":[{"key":"_contract_address","value":"sei1nl2dchs6gp8tydxt0ws9d2540m2yrv3umzua3gaazughd9s5ywcsq8ugah"},{"key":"code_id","value":"1141"}]},{"type":"message","attributes":[{"key":"action","value":"/cosmwasm.wasm.v1.MsgInstantiateContract"},{"key":"module","value":"wasm"},{"key":"sender","value":"sei1q79kkzwzmwenzzdae474etgqs5cjqxlsh4cpak"}]},{"type":"wasm","attributes":[{"key":"_contract_address","value":"sei1nl2dchs6gp8tydxt0ws9d2540m2yrv3umzua3gaazughd9s5ywcsq8ugah"},{"key":"method","value":"instantiate"},{"key":"owner","value":"sei1q79kkzwzmwenzzdae474etgqs5cjqxlsh4cpak"},{"key":"count","value":"0"}]}]}]'
-timestamp: ""
-tx: null
-txhash: 66B2D61EC12C20CFECF6111AFAA95A3C6893F5A4DB99A9896958A2BFB1341165
-```
-
 #### Execute
 
 **sparrow swap exec**
