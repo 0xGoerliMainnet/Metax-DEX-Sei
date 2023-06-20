@@ -14,44 +14,12 @@ pub struct InstantiateMsg {
 
 /// This enum describes a swap operation.
 #[cw_serde]
-pub enum BaseSwapMsg {
-    /// Native swap
-    NativeSwap {
-        /// The name (denomination) of the native asset to swap from
-        offer_denom: String,
-        /// The name (denomination) of the native asset to swap to
-        ask_denom: String,
-    },
-    /// ASTRO swap
-    AstroSwap {
-        /// Information about the asset being swapped
-        offer_asset_info: AssetInfo,
-        /// Information about the asset we swap to
-        ask_asset_info: AssetInfo,
-    },
-}
-
-impl BaseSwapMsg {
-    pub fn get_target_asset_info(&self) -> AssetInfo {
-        match self {
-            BaseSwapMsg::NativeSwap { ask_denom, .. } => AssetInfo::NativeToken {
-                denom: ask_denom.clone(),
-            },
-            BaseSwapMsg::AstroSwap { ask_asset_info, .. } => ask_asset_info.clone(),
-        }
-    }
-}
-
-/// This enum describes a swap operation.
-#[cw_serde]
 pub enum SwapOperation {
     SparrowSwap  {
         pool_address: String,
         offer_asset: SparrowSwapAsset,
-        ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
-        max_spread: Option<Decimal>,
-        base_swap_info: BaseSwapMsg
+        max_spread: Option<Decimal>
     },
     AstroportSwap {
         pool_address: String,
@@ -59,22 +27,9 @@ pub enum SwapOperation {
         ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
-        base_swap_info: BaseSwapMsg
     }
 }
 
-impl SwapOperation {
-    pub fn get_target_asset_info(&self) -> AssetInfo {
-        match self {
-            SwapOperation::SparrowSwap {base_swap_info, ..} => {
-                base_swap_info.get_target_asset_info()
-            },
-            SwapOperation::AstroportSwap {base_swap_info, ..} => {
-                base_swap_info.get_target_asset_info()
-            }
-        }
-    }
-}
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -84,7 +39,6 @@ pub enum ExecuteMsg {
     SparrowSwap  {
         pool_address: String,
         offer_asset: SparrowSwapAsset,
-        ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>,
@@ -101,6 +55,7 @@ pub enum ExecuteMsg {
         steps: Vec<SwapOperation>,
         minimum_receive: Option<Uint128>,
         to: Option<Addr>,
+        target_asset_info: AssetInfo,
     },
     AssertMinimumReceive {
         asset_info: AssetInfo,

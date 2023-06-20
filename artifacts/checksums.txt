@@ -1,1 +1,1 @@
-1fa631850acff029bf16ebb0acdf35a149795518c0e48926613f9a17f68bdb98  wasm_dexrouter-aarch64.wasm
+4c5188e23642996571d1d41bb5eb6b20be6f5b63b7c63b6e9bda130acb2cdea7  wasm_dexrouter-aarch64.wasm

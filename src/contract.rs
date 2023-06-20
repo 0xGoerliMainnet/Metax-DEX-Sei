@@ -14,7 +14,7 @@ use crate::state::{State, STATE};
 
 // sparrowswap
 use sparrowswap_lib::pair::{ExecuteMsg as SparrowSwapeMsg};
-use sparrowswap_lib::asset::{Asset as SparrowSwapAsset};
+use sparrowswap_lib::asset::{Asset as SparrowSwapAsset, AssetInfo as SparrowSwapAssetInfo};
 
 // astroport
 use astroport_lib::pair::{ExecuteMsg as AstroportMsg};
@@ -61,11 +61,10 @@ pub fn execute(
         ExecuteMsg::SparrowSwap {
             pool_address,
             offer_asset,
-            ask_asset_info,
             belief_price,
             max_spread,
             to
-        } => execute::sparrowSwap( deps, env, info, pool_address, offer_asset, ask_asset_info, belief_price, max_spread, to),
+        } => execute::sparrowSwap( deps, env, info, pool_address, offer_asset, belief_price, max_spread, to),
         ExecuteMsg::AstroportSwap {
             pool_address,
             offer_asset,
@@ -77,8 +76,9 @@ pub fn execute(
         ExecuteMsg::Unxswap{
             steps,
             minimum_receive,
-            to
-        } => execute::unxswap(deps, env, info, steps, minimum_receive, to),
+            to,
+            target_asset_info
+        } => execute::unxswap(deps, env, info, steps, minimum_receive, to, target_asset_info),
         ExecuteMsg::AssertMinimumReceive {
             asset_info,
             prev_balance,
@@ -125,36 +125,39 @@ pub mod execute {
         info: MessageInfo,
         pool_address: String,
         offer_asset: SparrowSwapAsset,
-        ask_asset_info: Option<AssetInfo>,
         belief_price: Option<Decimal>,
         max_spread: Option<Decimal>,
         to: Option<String>,
     ) -> Result<Response, ContractError> {
 
-        let mut temp_ask_asset_info = ask_asset_info.clone().unwrap();
-        let mut temp_ask_asset_info2 = ask_asset_info.clone().unwrap();
+        let mut temp_offer_asset_info = offer_asset.info.clone();
+        let mut temp_offer_asset_info2 = offer_asset.info.clone();
 
         // smart query
-        let ask_balance = match temp_ask_asset_info {
-            AssetInfo::NativeToken { denom } => {
+        let offer_balance = match temp_offer_asset_info {
+            SparrowSwapAssetInfo::NativeToken { denom } => {
                 query_balance(&deps.querier, env.contract.address, denom)?
             }
-            AssetInfo::Token { contract_addr } => {
+            SparrowSwapAssetInfo::Token { contract_addr } => {
                 query_token_balance(&deps.querier, contract_addr, env.contract.address)?
             }
         };
-        let ask_denom = str::from_utf8(temp_ask_asset_info2.as_bytes());
+        let offer_denom = str::from_utf8(temp_offer_asset_info2.as_bytes());
         let new_funds = vec![Coin{
-            denom: (*(ask_denom.unwrap())).to_string(),
-            amount: ask_balance
+            denom: (*(offer_denom.unwrap())).to_string(),
+            amount: offer_balance
         }];
 
+        let new_offer_asset = SparrowSwapAsset {
+            info: offer_asset.info,
+            amount: offer_balance,
+        };
 
         Ok(Response::new().add_message(WasmMsg::Execute {
             contract_addr: pool_address,
             funds: new_funds,
             msg: to_binary(&SparrowSwapeMsg::Swap {
-                offer_asset: offer_asset,
+                offer_asset: new_offer_asset,
                 belief_price: belief_price,
                 max_spread: max_spread,
                 to: to
@@ -175,11 +178,11 @@ pub mod execute {
         to: Option<String>
     ) -> Result<Response, ContractError> {
 
-        let mut temp_ask_asset_info = ask_asset_info.clone().unwrap();
-        let mut temp_ask_asset_info2 = ask_asset_info.clone().unwrap();
+        let mut temp_offer_asset_info = offer_asset.info.clone();
+        let mut temp_offer_asset_info2 = offer_asset.info.clone();
 
         // smart query
-        let ask_balance = match temp_ask_asset_info {
+        let offer_balance = match temp_offer_asset_info {
             AssetInfo::NativeToken { denom } => {
                 query_balance(&deps.querier, env.contract.address, denom)?
             }
@@ -187,10 +190,10 @@ pub mod execute {
                 query_token_balance(&deps.querier, contract_addr, env.contract.address)?
             }
         };
-        let ask_denom = str::from_utf8(temp_ask_asset_info2.as_bytes());
+        let offer_denom = str::from_utf8(temp_offer_asset_info2.as_bytes());
         let new_funds = vec![Coin{
-            denom: (*(ask_denom.unwrap())).to_string(),
-            amount: ask_balance
+            denom: (*(offer_denom.unwrap())).to_string(),
+            amount: offer_balance
         }];
 
         Ok(Response::new().add_message(WasmMsg::Execute {
@@ -227,18 +230,18 @@ pub mod execute {
         Ok(Response::default())
     }
 
-    // only one step
     pub fn unxswap(
         deps: DepsMut,
         env: Env,
         raw_info: MessageInfo,
         steps: Vec<SwapOperation>,
         minimum_receive: Option<Uint128>,
-        to: Option<Addr>
+        to: Option<Addr>,
+        target_asset_info: AssetInfo,
     ) -> Result<Response, ContractError> {
         let operations_len = steps.len();
-        let mut operation_index = 0;
-        let target_asset_info = steps.last().unwrap().get_target_asset_info();
+        let mut operation_index = 0;        
+
         let to = if let Some(to) = to {
             deps.api.addr_validate(to.as_str())?
         } else {
@@ -253,10 +256,8 @@ pub mod execute {
                     SwapOperation::SparrowSwap  {
                         pool_address,
                         offer_asset,
-                        ask_asset_info,
                         belief_price,
-                        max_spread,
-                        base_swap_info,
+                        max_spread
                     } => {
                         Ok(
                             CosmosMsg::Wasm(
@@ -273,7 +274,6 @@ pub mod execute {
                                     msg: to_binary(&ExecuteMsg::SparrowSwap {
                                         pool_address: pool_address,
                                         offer_asset: offer_asset,
-                                        ask_asset_info: ask_asset_info,
                                         belief_price: belief_price,
                                         max_spread: max_spread,
                                         to: if operation_index == operations_len {
@@ -291,8 +291,7 @@ pub mod execute {
                         offer_asset,
                         ask_asset_info,
                         belief_price,
-                        max_spread,
-                        base_swap_info
+                        max_spread
                     } => {
                         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                             contract_addr: env.contract.address.to_string(),
