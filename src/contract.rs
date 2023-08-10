@@ -3,13 +3,13 @@ use std::str;
 
 use cosmwasm_std::{
     entry_point, to_binary, Addr, CosmosMsg, Decimal, Deps, DepsMut, Env,
-    MessageInfo, Response, StdError, StdResult, Uint128, WasmMsg, WasmQuery, Coin
+    MessageInfo, Response, StdResult, Uint128, WasmMsg, Coin
 };
 
 use cw2::set_contract_version;
 
 use crate::error::ContractError;
-use crate::msg::{ExecuteMsg, GetCountResponse, InstantiateMsg, QueryMsg, SwapOperation};
+use crate::msg::{ExecuteMsg, InstantiateMsg, SwapOperation};
 use crate::state::{State, STATE};
 
 // sparrowswap
@@ -131,10 +131,9 @@ pub mod execute {
     ) -> Result<Response, ContractError> {
 
         let mut temp_offer_asset_info = offer_asset_info.clone();
-        let mut temp_offer_asset_info2 = offer_asset_info.clone();
 
         // smart query
-        let offer_balance = match temp_offer_asset_info {
+        let offer_balance = match &temp_offer_asset_info {
             SparrowSwapAssetInfo::NativeToken { denom } => {
                 query_balance(&deps.querier, env.contract.address, denom)?
             }
@@ -142,7 +141,7 @@ pub mod execute {
                 query_token_balance(&deps.querier, contract_addr, env.contract.address)?
             }
         };
-        let offer_denom = str::from_utf8(temp_offer_asset_info2.as_bytes());
+        let offer_denom = str::from_utf8(temp_offer_asset_info.as_bytes());
         let new_funds = vec![Coin{
             denom: (*(offer_denom.unwrap())).to_string(),
             amount: offer_balance
@@ -179,10 +178,8 @@ pub mod execute {
     ) -> Result<Response, ContractError> {
 
         let mut temp_offer_asset_info = offer_asset_info.clone();
-        let mut temp_offer_asset_info2 = offer_asset_info.clone();
-
         // smart query
-        let offer_balance = match temp_offer_asset_info {
+        let offer_balance = match &temp_offer_asset_info {
             AssetInfo::NativeToken { denom } => {
                 query_balance(&deps.querier, env.contract.address, denom)?
             }
@@ -190,7 +187,7 @@ pub mod execute {
                 query_token_balance(&deps.querier, contract_addr, env.contract.address)?
             }
         };
-        let offer_denom = str::from_utf8(temp_offer_asset_info2.as_bytes());
+        let offer_denom = str::from_utf8(temp_offer_asset_info.as_bytes());
         let new_funds = vec![Coin{
             denom: (*(offer_denom.unwrap())).to_string(),
             amount: offer_balance
@@ -268,14 +265,7 @@ pub mod execute {
                             CosmosMsg::Wasm(
                                 WasmMsg::Execute {
                                     contract_addr: env.contract.address.to_string(),
-                                    funds: if operation_index == 0 {
-                                            vec![Coin{
-                                                denom: raw_info.funds[0].denom.clone(),
-                                                amount: raw_info.funds[0].amount
-                                            }] 
-                                        } else {
-                                            vec![]
-                                        },                                   
+                                    funds: vec![],   
                                     msg: to_binary(&ExecuteMsg::SparrowSwap {
                                         pool_address: pool_address,
                                         offer_asset_info: offer_asset_info,
@@ -300,14 +290,7 @@ pub mod execute {
                     } => {
                         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                             contract_addr: env.contract.address.to_string(),
-                            funds: if operation_index == 0 {
-                                    vec![Coin{
-                                        denom: raw_info.funds[0].denom.clone(),
-                                        amount: raw_info.funds[0].amount
-                                    }] 
-                                } else {
-                                    vec![]
-                                },
+                            funds: vec![],
                             msg: to_binary(&ExecuteMsg::AstroportSwap {
                                 pool_address: pool_address,
                                 offer_asset_info: offer_asset_info,

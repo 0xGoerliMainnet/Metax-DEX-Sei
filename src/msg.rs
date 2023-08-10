@@ -2,10 +2,10 @@ use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Decimal, Uint128, Addr};
 
 // Sparrow Swap
-use sparrowswap_lib::asset::{Asset as SparrowSwapAsset, AssetInfo as SparrowSwapAssetInfo};
+use sparrowswap_lib::asset::{AssetInfo as SparrowSwapAssetInfo};
 
 // Astroport Swap
-use astroport_lib::asset::{Asset as AstroportAsset, AssetInfo};
+use astroport_lib::asset::{AssetInfo};
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -29,7 +29,6 @@ pub enum SwapOperation {
         max_spread: Option<Decimal>,
     }
 }
-
 
 #[cw_serde]
 pub enum ExecuteMsg {
