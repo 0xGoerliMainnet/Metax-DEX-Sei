@@ -19,10 +19,7 @@ use sparrowswap_lib::asset::{Asset as SparrowSwapAsset, AssetInfo as SparrowSwap
 // astroport
 use astroport_lib::pair::{ExecuteMsg as AstroportMsg};
 use astroport_lib::asset::{Asset as AstroportAsset, AssetInfo};
-use astroport_lib::querier::{query_balance, query_pair_info, query_token_balance};
-
-use serde_json::{Result as JSONResult, Value};
-
+use astroport_lib::querier::{query_balance, query_token_balance};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:wasm-dexrouter";
@@ -51,7 +48,7 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    env: Env,
+    exe_env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
@@ -64,7 +61,7 @@ pub fn execute(
             belief_price,
             max_spread,
             to
-        } => execute::sparrowSwap( deps, env, info, pool_address, offer_asset_info, belief_price, max_spread, to),
+        } => execute::sparrowSwap( deps, exe_env, info, pool_address, offer_asset_info, belief_price, max_spread, to),
         ExecuteMsg::AstroportSwap {
             pool_address,
             offer_asset_info,
@@ -72,13 +69,13 @@ pub fn execute(
             belief_price,
             max_spread,
             to
-        } => execute::astroportSwap(deps, env, info, pool_address, offer_asset_info, ask_asset_info, belief_price, max_spread, to),
+        } => execute::astroportSwap(deps, exe_env, info, pool_address, offer_asset_info, ask_asset_info, belief_price, max_spread, to),
         ExecuteMsg::Unxswap{
             steps,
             minimum_receive,
             to,
             target_asset_info
-        } => execute::unxswap(deps, env, info, steps, minimum_receive, to, target_asset_info),
+        } => execute::unxswap(deps, exe_env, info, steps, minimum_receive, to, target_asset_info),
         ExecuteMsg::AssertMinimumReceive {
             asset_info,
             prev_balance,
@@ -122,7 +119,7 @@ pub mod execute {
     pub fn sparrowSwap(
         deps: DepsMut,
         env: Env,
-        info: MessageInfo,
+        _info: MessageInfo,
         pool_address: String,
         offer_asset_info: SparrowSwapAssetInfo,
         belief_price: Option<Decimal>,
@@ -167,8 +164,8 @@ pub mod execute {
     
     pub fn astroportSwap(
         deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
+        exe_env: Env,
+        _info: MessageInfo,
         pool_address: String,
         offer_asset_info: AssetInfo,
         ask_asset_info: Option<AssetInfo>,
@@ -181,10 +178,10 @@ pub mod execute {
         // smart query
         let offer_balance = match &temp_offer_asset_info {
             AssetInfo::NativeToken { denom } => {
-                query_balance(&deps.querier, env.contract.address, denom)?
+                query_balance(&deps.querier, exe_env.contract.address, denom)?
             }
             AssetInfo::Token { contract_addr } => {
-                query_token_balance(&deps.querier, contract_addr, env.contract.address)?
+                query_token_balance(&deps.querier, contract_addr, exe_env.contract.address)?
             }
         };
         let offer_denom = str::from_utf8(temp_offer_asset_info.as_bytes());
