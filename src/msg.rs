@@ -7,11 +7,6 @@ use sparrowswap_lib::asset::{AssetInfo as SparrowSwapAssetInfo};
 // Astroport Swap
 use astroport_lib::asset::{AssetInfo};
 
-#[cw_serde]
-pub struct InstantiateMsg {
-    pub count: i32,
-}
-
 /// This enum describes a swap operation.
 #[cw_serde]
 pub enum SwapOperation {
@@ -32,9 +27,6 @@ pub enum SwapOperation {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Increment {},
-    Reset { count: i32 },
-
     SparrowSwap  {
         pool_address: String,
         offer_asset_info: SparrowSwapAssetInfo,
